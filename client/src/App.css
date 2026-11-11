@@ -14,7 +14,7 @@
     color: white;
 
     display: flex;
-    items-align: center;
+    align-items: center;
     padding: 15px 25px;
 }
 
@@ -53,4 +53,21 @@
 
 .main-content h1 {
     font-size: 28px;
+}
+
+.sidebar a {
+    display: block;
+    text-decoration: none;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.sidebar a:hover {
+    background: #334155;
+}
+
+.sidebar a.active {
+    background: #334155;
+    font-weight: bold;
 }
