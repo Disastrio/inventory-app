@@ -48,19 +48,7 @@ const inventoryItems = [
     unit: "L",
     reorderLevel: 30,
     expiryDate: "2027-11-02",
-  },
-  {
-    id: 5,
-    name: "Mechanical seal kit",
-    sku: "EQP-014",
-    category: "Equipment",
-    batch: "MSK-4402",
-    location: "Parts store / Bin C14",
-    quantity: 16,
-    unit: "kits",
-    reorderLevel: 8,
-    expiryDate: null,
-  },
+  }
 ];
 
 function formatDate(date) {
