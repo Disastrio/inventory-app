@@ -3,69 +3,101 @@ import { useState } from "react";
 const inventoryItems = [
   {
     id: 1,
-    name: "Nitric Acid (HNO3)",
+    name: "Nitric acid",
     sku: "CHEM-001",
     category: "Chemical",
+    batch: "NA-26041",
+    location: "Chemical store / Shelf A2",
     quantity: 12,
-    unit: "Litres",
+    unit: "L",
     reorderLevel: 20,
-    location: "Chemical Store A",
+    expiryDate: "2027-04-30",
   },
   {
     id: 2,
-    name: "Hydrochloric Acid",
+    name: "Hydrochloric acid",
     sku: "CHEM-002",
     category: "Chemical",
+    batch: "HCL-26018",
+    location: "Chemical store / Shelf A3",
     quantity: 80,
-    unit: "Litres",
+    unit: "L",
     reorderLevel: 25,
-    location: "Chemical Store A",
+    expiryDate: "2027-08-15",
   },
   {
     id: 3,
     name: "Spectrophotometer",
     sku: "EQP-001",
     category: "Equipment",
+    batch: "SP-1048",
+    location: "Equipment room / Bay 1",
     quantity: 2,
-    unit: "Units",
+    unit: "units",
     reorderLevel: 3,
-    location: "Equipment Room",
+    expiryDate: null,
   },
   {
     id: 4,
-    name: "Sulfuric Acid",
+    name: "Sulfuric acid",
     sku: "CHEM-003",
     category: "Chemical",
+    batch: "SA-25992",
+    location: "Chemical store / Shelf B1",
     quantity: 200,
-    unit: "Litres",
+    unit: "L",
     reorderLevel: 30,
-    location: "Chemical Store B",
+    expiryDate: "2027-11-02",
+  },
+  {
+    id: 5,
+    name: "Mechanical seal kit",
+    sku: "EQP-014",
+    category: "Equipment",
+    batch: "MSK-4402",
+    location: "Parts store / Bin C14",
+    quantity: 16,
+    unit: "kits",
+    reorderLevel: 8,
+    expiryDate: null,
   },
 ];
 
+function formatDate(date) {
+  if (!date) return "—";
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${date}T00:00:00`));
+}
+
 function Inventory() {
   const [search, setSearch] = useState("");
-  const [stockFilter, setStockFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const lowStockCount = inventoryItems.filter(
     (item) => item.quantity <= item.reorderLevel,
   ).length;
 
   const filteredItems = inventoryItems.filter((item) => {
-    const searchTerm = search.trim().toLowerCase();
+    const term = search.trim().toLowerCase();
 
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm) ||
-      item.sku.toLowerCase().includes(searchTerm) ||
-      item.location.toLowerCase().includes(searchTerm);
+    const matchesSearch = [
+      item.name,
+      item.sku,
+      item.batch,
+      item.location,
+    ].some((value) => value.toLowerCase().includes(term));
 
     const isLowStock = item.quantity <= item.reorderLevel;
-    const matchesStock =
-      stockFilter === "All" ||
-      (stockFilter === "Low stock" && isLowStock) ||
-      (stockFilter === "In stock" && !isLowStock);
+    const matchesStatus =
+      statusFilter === "All" ||
+      (statusFilter === "Reorder" && isLowStock) ||
+      (statusFilter === "In stock" && !isLowStock);
 
-    return matchesSearch && matchesStock;
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -73,81 +105,77 @@ function Inventory() {
       <header className="inventory-header">
         <div>
           <h1>Inventory</h1>
-          <p>Monitor quantities and reorder levels</p>
+          <p>Stock by item, batch, and storage location</p>
+        </div>
+
+        <div className="inventory-count">
+          <strong>{inventoryItems.length}</strong> items
+          <span aria-hidden="true">·</span>
+          <strong>{lowStockCount}</strong> at reorder level
         </div>
       </header>
 
-      <div className="inventory-summary">
-        <article className="inventory-summary-card">
-          <span>Total items</span>
-          <strong>{inventoryItems.length}</strong>
-        </article>
-
-        <article className="inventory-summary-card low-stock-card">
-          <span>Low stock items</span>
-          <strong>{lowStockCount}</strong>
-        </article>
-      </div>
-
-      <div className="inventory-controls">
+      <div className="inventory-toolbar">
         <input
           type="search"
-          placeholder="Search name, SKU, or location"
+          placeholder="Search inventory"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          aria-label="Search inventory"
+          aria-label="Search by item, SKU, batch, or location"
         />
 
         <select
-          value={stockFilter}
-          onChange={(event) => setStockFilter(event.target.value)}
-          aria-label="Filter stock status"
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value)}
+          aria-label="Filter inventory by status"
         >
           <option value="All">All stock</option>
-          <option value="Low stock">Low stock</option>
-          <option value="In stock">In stock</option>
+          <option value="Reorder">At reorder level</option>
+          <option value="In stock">Above reorder level</option>
         </select>
+
+        <span className="inventory-result-count">
+          {filteredItems.length} of {inventoryItems.length} items
+        </span>
       </div>
 
-      <div className="inventory-table-wrapper">
+      <div className="inventory-table-wrap">
         <table className="inventory-table">
           <thead>
             <tr>
               <th>Item</th>
-              <th>SKU</th>
+              <th>Batch / serial</th>
               <th>Location</th>
-              <th>Quantity</th>
+              <th>On hand</th>
               <th>Reorder level</th>
+              <th>Expiry</th>
               <th>Status</th>
             </tr>
           </thead>
 
           <tbody>
             {filteredItems.map((item) => {
-              const isLowStock = item.quantity <= item.reorderLevel;
+              const needsReorder = item.quantity <= item.reorderLevel;
 
               return (
                 <tr key={item.id}>
                   <td>
-                    <strong>{item.name}</strong>
-                    <span className="inventory-category">{item.category}</span>
+                    <strong className="inventory-item-name">{item.name}</strong>
+                    <span className="inventory-item-detail">
+                      {item.sku} · {item.category}
+                    </span>
                   </td>
-                  <td>{item.sku}</td>
+                  <td>{item.batch}</td>
                   <td>{item.location}</td>
                   <td>
-                    {item.quantity} {item.unit}
+                    <strong>{item.quantity}</strong> {item.unit}
                   </td>
                   <td>
                     {item.reorderLevel} {item.unit}
                   </td>
+                  <td>{formatDate(item.expiryDate)}</td>
                   <td>
-                    <span
-                      className={`stock-status ${
-                        isLowStock ? "stock-status-low" : "stock-status-ok"
-                      }`}
-                    >
-                      {isLowStock ? "Low stock" : "In stock"}
-                    </span>
+                    {needsReorder ? "Reorder" : "In stock"}
                   </td>
                 </tr>
               );
@@ -155,8 +183,8 @@ function Inventory() {
 
             {filteredItems.length === 0 && (
               <tr>
-                <td className="inventory-empty" colSpan="6">
-                  No inventory items match your search.
+                <td className="inventory-empty" colSpan="7">
+                  No matching inventory items.
                 </td>
               </tr>
             )}
